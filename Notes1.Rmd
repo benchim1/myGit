@@ -11,7 +11,7 @@ output: html_document
 
 In line calculation `r ((43 - 17)*.1)^2`
 
-#### A code block
+#### A code block for R markdown
 
 ```{r}
 ((43 - 17)*.1)^2
