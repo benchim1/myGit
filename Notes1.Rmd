@@ -5,7 +5,7 @@ output: html_document
 
 ## R Markdown
 
-**Git** helps me to ***edit***, ***track*** and ***share*** my changes to R scripts.
+**Git** helps me to ***edit***, ***track*** and ***share*** my changes to **R scripts**.
 
 #### The following are a few examples of the use of R code
 
