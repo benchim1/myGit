@@ -2,9 +2,9 @@
 
 Hi. I am new to Git
 
-And another change to the local develop branch ...
+And another change to the local develop branch
 
 Glad to be here
 
-Learnt a lot today....
+Learnt a lot today
 
