@@ -6,3 +6,10 @@ output: html_document
 ## My RFR class notes
 
 I **love** formatting *in* ***R script***
+
+#### #R
+
+    great stuff
+    cant wait to work on my dataset
+    
+
