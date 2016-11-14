@@ -1,0 +1,8 @@
+---
+title: "My RFR class notes"
+output: html_document
+---
+
+## R Markdown
+
+**Git** helps me to ***edit***, ***track*** and ***share*** my changes to R scripts.
