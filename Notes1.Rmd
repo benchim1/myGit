@@ -6,3 +6,19 @@ output: html_document
 ## R Markdown
 
 **Git** helps me to ***edit***, ***track*** and ***share*** my changes to R scripts.
+
+#### The following are a few examples of the use of R code
+
+In line calculation `r ((43 - 17)*.1)^2`
+
+#### A code block
+
+```{r}
+((43 - 17)*.1)^2
+```
+
+#### A code block which does not echo the source text
+
+```{r echo=FALSE}
+((43 - 17)*.1)^2
+```
