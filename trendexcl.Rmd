@@ -1,0 +1,147 @@
+---
+title: "Primary HIV drug resistance in South Africa"
+output: html_document
+runtime: shiny  
+---
+
+##### This analysis on pre-ART resistance excluded patients with prior ART exposure, e.g. **for PMTCT**
+
+The analysis involves **HIV primary resistance** studies from South Africa, between 2000 and 2015.
+
+We sought to assess the trends in drug resistance over the years from patients sampled in different populations and studies, using a generalized linear mixed effects regression (glmer) model [http://www.ats.ucla.edu/stat/r/dae/melogit.htm]()
+
+#######################################################################################################################    
+##### Library
+
+    library(lme4)
+  
+#######################################################################################################################   
+    
+##### Function
+
+    model_summary <- function(m){
+        lor<-summary(m)$coefficients[,1]
+        se<-summary(m)$coefficients[,2]
+        or <-exp(lor)
+        or1 <- exp(lor - 1.96*se)
+        or2 <- exp(lor + 1.96*se)
+        vars <- rownames(summary(m)$coefficients)
+        num_vars <- length(vars)
+        cat("\n##OR\n")
+        for (i in 1:num_vars){
+        or_var <- round(or[i],3)
+        or1_var <- round(or1[i],3)
+        or2_var <- round(or2[i],3)
+        ci <- paste("(",or1_var, "-", or2_var,")", sep="")
+        p_var <- round(coef(summary(m)) [i,4],6)
+        if(p_var < 0.05) { p_var = paste(p_var, "*", sep="")}
+        cat(paste(vars[i], or_var, ci, p_var, sep="\t"), "\n")
+        }
+    }
+
+Data input  
+
+    trendexcl <- read.table("~/Documents/R/Ben.R.Scripts.R/trendexcl.txt", sep="\t",
+    na.strings=c('NULL'), header=T)
+  
+#######################################################################################################################    
+Convert factors to integer(or numeric), it can be done via as.charactor function
+
+    trendexcl$NumPISDRMs <- as.integer(as.character(trendexcl$NumPISDRMs))
+    trendexcl$NumNRTISDRMs <- as.integer(as.character(trendexcl$NumNRTISDRMs))
+    trendexcl$NumNNRTISDRMs <- as.integer(as.character(trendexcl$NumNNRTISDRMs))
+    
+#######################################################################################################################    
+Calculating NumSDRMs takes several steps because there are rows containing NAs
+
+    trendexcl$NumSDRMs <- trendexcl$NumNRTISDRMs + trendexcl$NumNNRTISDRMs  
+    
+    trendexcl[! is.na(trendexcl$NumPISDRMs), c("NumSDRMs")] <- trendexcl[!is.na(trendexcl$NumPISDRMs), c("NumSDRMs")] 
+    + trendexcl[! is.na(trendexcl$NumPISDRMs),c("NumPISDRMs")] 
+    
+    trendexcl$NumSDRMs <- rowSums(trendexcl[,c("NumPISDRMs", "NumNRTISDRMs", "NumNNRTISDRMs")], na.rm=TRUE)  
+    print(trendexcl)
+    
+#######################################################################################################################   
+
+Create a mutant column
+
+    trendexcl$Mutant<- 0
+    trendexcl[trendexcl$NumSDRMs > 0, c("Mutant")] <- 1
+    trendexcl$Mutant <- as.factor(trendexcl$Mutant)
+    print(trendexcl)
+    
+#######################################################################################################################   
+
+Create a mutant column for each drug class
+
+    trendexcl$NRTIMutant<- 0
+    trendexcl[! is.na(trendexcl$NumNRTISDRMs) & trendexcl$NumNRTISDRMs > 0, c("NRTIMutant")] <- 1
+    trendexcl[is.na(trendexcl$NumNRTISDRMs), c("NRTIMutant")] <- NA
+    trendexcl$NRTIMutant <- as.factor(trendexcl$NRTIMutant)
+    
+    trendexcl$NNRTIMutant<- 0
+    trendexcl[! is.na(trendexcl$NumNNRTISDRMs) & trendexcl$NumNNRTISDRMs > 0, c("NNRTIMutant")] <- 1
+    trendexcl[is.na(trendexcl$NumNNRTISDRMs), c("NNRTIMutant")] <- NA
+    trendexcl$NNRTIMutant <- as.factor(trendexcl$NNRTIMutant)
+    
+    trendexcl$PIMutant<- 0
+    trendexcl[! is.na(trendexcl$NumPISDRMs) & trendexcl$NumPISDRMs > 0, c("PIMutant")] <- 1
+    trendexcl[is.na(trendexcl$NumPISDRMs), c("PIMutant")] <- NA
+    trendexcl$PIMutant <- as.factor(trendexcl$PIMutant)
+    print(trendexcl)
+
+#######################################################################################################################   
+
+Create a loop and dissect
+
+    studies <- unique(trendexcl$StudyID)
+
+    for (StudyID in studies){
+       cat("\n\n##########################", StudyID, '\n')
+       d<- trendexcl[trendexcl$StudyID == StudyID, ]
+       print(dim(trendexcl[trendexcl$StudyID == StudyID, ])[1])
+       print(summary(trendexcl[trendexcl$StudyID == StudyID, "Mutant"]))
+    }
+
+#######################################################################################################################   
+
+#### Performing mixed effects logistic regression
+
+#######################################################################################################################   
+    
+Normalize all isolate years to baseline, i.e. least study year
+
+    trendexcl$IsolateYear2 <- trendexcl$IsolateYear - min (trendexcl$IsolateYear)
+    
+#######################################################################################################################   
+
+Overall 
+
+    m <- glmer(Mutant ~ IsolateYear2 + (1|StudyID), data=trendexcl, family=binomial)
+    print(summary(m))
+    model_summary(m)
+
+#######################################################################################################################   
+
+glmer by drug class
+
+    cat("\n########## NRTI","\n")
+    m1 <- glmer(NRTIMutant ~ IsolateYear2 + (1|StudyID), data=trendexcl, family=binomial)
+    print(summary(m1))
+    model_summary(m1)
+    
+    cat("\n########## NNRTI","\n")
+    m1 <- glmer(NNRTIMutant ~ IsolateYear2 + (1|StudyID), data=trendexcl, family=binomial)
+    print(summary(m1))
+    model_summary(m1)
+
+    cat("\n########## PI","\n")
+    m1 <- glmer(PIMutant ~ IsolateYear2 + (1|StudyID), data=trendexcl, family=binomial)
+    print(summary(m1))
+    model_summary(m1)
+    
+#######################################################################################################################   
+
+
+
