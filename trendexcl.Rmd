@@ -1,7 +1,6 @@
 ---
 title: "Primary HIV drug resistance in South Africa"
 output: html_document
-runtime: shiny  
 ---
 
 ##### This analysis on pre-ART resistance excluded patients with prior ART exposure, e.g. **for PMTCT**
@@ -43,7 +42,8 @@ Data input
 
     trendexcl <- read.table("~/Documents/R/Ben.R.Scripts.R/trendexcl.txt", sep="\t",
     na.strings=c('NULL'), header=T)
-  
+
+
 #######################################################################################################################    
 Convert factors to integer(or numeric), it can be done via as.charactor function
 
@@ -64,8 +64,8 @@ Calculating NumSDRMs takes several steps because there are rows containing NAs
     
 #######################################################################################################################   
 
-Create a mutant column
-
+Create mutant column
+    
     trendexcl$Mutant<- 0
     trendexcl[trendexcl$NumSDRMs > 0, c("Mutant")] <- 1
     trendexcl$Mutant <- as.factor(trendexcl$Mutant)
@@ -73,7 +73,7 @@ Create a mutant column
     
 #######################################################################################################################   
 
-Create a mutant column for each drug class
+Create mutant columns for each drug class
 
     trendexcl$NRTIMutant<- 0
     trendexcl[! is.na(trendexcl$NumNRTISDRMs) & trendexcl$NumNRTISDRMs > 0, c("NRTIMutant")] <- 1
@@ -93,7 +93,7 @@ Create a mutant column for each drug class
 
 #######################################################################################################################   
 
-Create a loop and dissect
+Create loop and dissect
 
     studies <- unique(trendexcl$StudyID)
 
