@@ -7,6 +7,8 @@ output: html_document
 
 I **love** formatting *in* ***R script***
 
+**Git** helps me to ***edit***, ***track*** and ***share*** my changes to **R scripts**
+
 #### #R
 
     great stuff
