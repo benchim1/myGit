@@ -3,11 +3,11 @@ title: "Primary HIV drug resistance in South Africa"
 output: html_document
 ---
 
-##### This analysis on pre-ART resistance excluded patients with prior ART exposure, e.g. **for PMTCT**
+##### This analysis on pre-ART resistance excluded patients with any prior exposure to ART, e.g. **for PMTCT**
 
-The analysis involves **HIV primary resistance** studies from South Africa, between 2000 and 2015.
+The analysis involves **studies on HIV primary resistance** in South Africa, between 2000 and 2015.
 
-We sought to assess the trends in drug resistance over the years from patients sampled in different populations and studies, using a generalized linear mixed effects regression (glmer) model [http://www.ats.ucla.edu/stat/r/dae/melogit.htm]()
+We assessed trends in drug resistance in patients sampled from different populations and studies, using a generalized linear mixed effects regression (glmer) model [http://www.ats.ucla.edu/stat/r/dae/melogit.htm]().
 
 #######################################################################################################################    
 ##### Library
@@ -40,12 +40,11 @@ We sought to assess the trends in drug resistance over the years from patients s
 
 Data input  
 
-    trendexcl <- read.table("~/Documents/R/Ben.R.Scripts.R/trendexcl.txt", sep="\t",
-    na.strings=c('NULL'), header=T)
+    trendexcl <- read.table("~/Documents/R/Ben.R.Scripts.R/trendexcl.txt", sep="\t", na.strings=c('NULL'), header=T)
 
 
 #######################################################################################################################    
-Convert factors to integer(or numeric), it can be done via as.charactor function
+Convert factors to integer using the as.charactor function
 
     trendexcl$NumPISDRMs <- as.integer(as.character(trendexcl$NumPISDRMs))
     trendexcl$NumNRTISDRMs <- as.integer(as.character(trendexcl$NumNRTISDRMs))
@@ -56,10 +55,10 @@ Calculating NumSDRMs takes several steps because there are rows containing NAs
 
     trendexcl$NumSDRMs <- trendexcl$NumNRTISDRMs + trendexcl$NumNNRTISDRMs  
     
-    trendexcl[! is.na(trendexcl$NumPISDRMs), c("NumSDRMs")] <- trendexcl[!is.na(trendexcl$NumPISDRMs), c("NumSDRMs")] 
-    + trendexcl[! is.na(trendexcl$NumPISDRMs),c("NumPISDRMs")] 
+    trendexcl[! is.na(trendexcl$NumPISDRMs), c("NumSDRMs")] <- trendexcl[!is.na(trendexcl$NumPISDRMs), c("NumSDRMs")] + trendexcl[! is.na(trendexcl$NumPISDRMs), c("NumPISDRMs")] 
     
     trendexcl$NumSDRMs <- rowSums(trendexcl[,c("NumPISDRMs", "NumNRTISDRMs", "NumNNRTISDRMs")], na.rm=TRUE)  
+
     print(trendexcl)
     
 #######################################################################################################################   
@@ -118,7 +117,7 @@ Normalize all isolate years to baseline, i.e. least study year
 
 Overall 
 
-    m <- glmer(Mutant ~ IsolateYear2 + (1|StudyID), data=trendexcl, family=binomial)
+    m1 <- glmer(Mutant ~ IsolateYear2 + (1|StudyID), data=trendexcl, family=binomial)
     print(summary(m))
     model_summary(m)
 
@@ -127,21 +126,202 @@ Overall
 glmer by drug class
 
     cat("\n########## NRTI","\n")
-    m1 <- glmer(NRTIMutant ~ IsolateYear2 + (1|StudyID), data=trendexcl, family=binomial)
-    print(summary(m1))
-    model_summary(m1)
-    
+    m2 <- glmer(NRTIMutant ~ IsolateYear2 + (1|StudyID), data=trendexcl, family=binomial)
+    print(summary(m2))
+    model_summary(m2)
+      
     cat("\n########## NNRTI","\n")
-    m1 <- glmer(NNRTIMutant ~ IsolateYear2 + (1|StudyID), data=trendexcl, family=binomial)
-    print(summary(m1))
-    model_summary(m1)
-
-    cat("\n########## PI","\n")
-    m1 <- glmer(PIMutant ~ IsolateYear2 + (1|StudyID), data=trendexcl, family=binomial)
-    print(summary(m1))
-    model_summary(m1)
+    m2 <- glmer(NNRTIMutant ~ IsolateYear2 + (1|StudyID), data=trendexcl, family=binomial)
+    print(summary(m2))
+    model_summary(m2)
     
-#######################################################################################################################   
+    cat("\n########## PI","\n")
+    m2 <- glmer(PIMutant ~ IsolateYear2 + (1|StudyID), data=trendexcl, family=binomial)
+    print(summary(m2))
+    model_summary(m2)
+    
+#################################################################################################
 
+#### Generating Frequency Tables
 
+    mytable <- table(trendexcl$IsolateYear, trendexcl$Mutant)
+    print(mytable)
 
+#####################################################################################
+
+Generate mutation frequencies for each year
+
+    prop.table(mytable, 1) * 100
+
+#####################################################################################
+
+Create a new dataframe for the table
+
+    b <- as.data.frame(prop.table(mytable, 1) * 100)
+    
+#####################################################################################
+
+Remove rows for the patients with no mutations by creating a new data frame and 
+rename the isolate year 
+
+    c <- b[-c(1:15), ]
+    names(c) [1] <- 'IsolateYear'
+    print(c)
+
+#####################################################################################
+
+Rename Freq and remove uneccessary columns
+
+    c$Percentage <- c$Freq
+    c$Freq <- NULL
+    c$Var2 <- NULL
+    print(c)
+    
+#########################################################################################
+
+New dataframe with drug class mutation frequencies. 
+
+    i <- d[c("IsolateYear", "Mutant", "NRTIMutant", "NNRTIMutant", "PIMutant")]
+    
+#####################################################################################
+
+Generate mutation frequencies for each year
+
+NRTI
+
+    mytable1 <- table(trendexcl$IsolateYear, trendexcl$NRTIMutant) 
+    prop.table(mytable1, 1) * 100
+    j <- as.data.frame(prop.table(mytable1, 1) * 100)
+    print(j)
+    
+    k <- j[-c(1:15), ]
+    names(k) [1] <- 'IsolateYear'
+    k$NRTI_Percentage <- k$Freq
+    k$Freq <- NULL
+    k$Var2 <- NULL
+    print(k)
+    
+#####################################################################################
+
+NNRTI
+
+    mytable2 <- table(trendexcl$IsolateYear, trendexcl$NNRTIMutant) 
+    prop.table(mytable2, 1) * 100
+    l <- as.data.frame(prop.table(mytable2, 1) * 100)
+    print(l)
+
+    m <- l[-c(1:15), ]
+    names(m) [1] <- 'IsolateYear'
+    m$NNRTI_Percentage <- m$Freq
+    m$Freq <- NULL
+    m$Var2 <- NULL
+    print(m)
+#####################################################################################
+
+PI
+
+    mytable3 <- table(trendexcl$IsolateYear, trendexcl$PIMutant) 
+    prop.table(mytable3, 1) * 100
+    n <- as.data.frame(prop.table(mytable3, 1) * 100)
+    print(n)
+
+    o <- n[-c(1:15), ]
+    names(o) [1] <- 'IsolateYear'
+    o$PI_Percentage <- o$Freq
+    o$Freq <- NULL
+    o$Var2 <- NULL
+    print(o)
+    
+#####################################################################################
+
+Number of sequences for each drug class by year
+
+    NumRTseqs <- c("37", "120", "149",  "343", "100",  "303", "92",  "555", "150",  "139", "381",
+    "253", "255",  "1057", "470")
+    NumPIseqs <- c( "0", "112",  "131", "0",  "29", "291",  "92", "501",  "147", "139",  "379",
+    "249",  "255", "1057",  "470")
+
+#####################################################################################
+
+Create data frame with number of studies and sequences for each year
+
+    a <- data.frame(c, Numstu, Numseqs)
+    
+#####################################################################################
+
+Combine data frames and delete unecessary columns
+
+    df <- data.frame(a, k, m, o)
+    df$IsolateYear.1 <- NULL
+    df$IsolateYear.2 <- NULL
+    df$IsolateYear.3 <- NULL
+
+#####################################################################################
+
+Convert isolate year and number of sequences from factor to numeric
+
+    df$IsolateYear <- as.numeric(as.character(df$IsolateYear))
+    df$Numseqs <- as.numeric(as.character(df$Numseqs))
+    
+#####################################################################################
+####Plot barchart and scatter plots
+
+Overall bar chart
+
+    library(ggplot2)
+    df$Numstu.seqs <- paste(df$Numstu, df$Numseqs, sep="\n")
+    
+    b4 <- ggplot(df, aes(x=IsolateYear, y=Percentage, width=0.99)) + ggtitle("Overall trend in drug resistance") + theme(plot.title = element_text(hjust = 0.5)) + geom_bar(stat="identity", color="black", fill="white") + geom_text(aes(label=Numstu.seqs), vjust=1.6, color="black", size=2) + geom_hline(yintercept=5, linetype="dashed", color = "blue") + geom_hline(yintercept=15, linetype="dashed", color = "red") + theme(axis.text.x = element_text(angle = 45, hjust = 1)) + theme(plot.title = element_text(size=14, face="bold")) + scale_x_continuous(breaks=seq(2000, 2015))
+    
+    plot(b4)
+    
+#####################################################################################
+
+Bar charts for each drug class
+
+*NRTI*
+
+    b1 <- ggplot(df, aes(x=IsolateYear, y=NRTI_Percentage, width=0.99)) + ggtitle("NRTI resistance") + theme(plot.title = element_text(hjust = 0.5)) + geom_bar(stat="identity", color="black", fill="white") + geom_hline(yintercept=5, linetype="dashed", color = "blue") + geom_hline(yintercept=15, linetype="dashed", color = "red") + ylim(0, 15.5) + theme(plot.title = element_text(size=14, face="bold"))
+    
+*NNRTI*
+
+    b2 <- ggplot(df, aes(x=IsolateYear, y=NNRTI_Percentage, width=0.99)) + ggtitle("NNRTI resistance") + theme(plot.title = element_text(hjust = 0.5)) + geom_bar(stat="identity", color="black", fill="white") + geom_hline(yintercept=5, linetype="dashed", color = "blue") + geom_hline(yintercept=15, linetype="dashed", color = "red") + ylim(0, 15.5) + theme(plot.title = element_text(size=14, face="bold"))
+    
+*PI*
+
+    b3 <- ggplot(df, aes(x=IsolateYear, y=PI_Percentage, width=0.99)) + ggtitle("PI resistance") + theme(plot.title = element_text(hjust = 0.5)) + geom_bar(stat="identity", color="black", fill="white") + geom_hline(yintercept=5, linetype="dashed", color = "blue", na.rm=TRUE) + geom_hline(yintercept=15, linetype="dashed", color = "red", na.rm=TRUE) + ylim(0, 15) + theme(plot.title = element_text(size=14, face="bold"))
+    
+#####################################################################################
+
+Plot combined barchart
+
+    b5 <- grid.arrange (b2, b1, b3, ncol=1)
+    b6 <- grid.arrange (b4, b5, ncol=2)
+
+#####################################################################################
+
+Plot a line graph with cirlces proportional to number of sequences
+
+    plot(Percentage ~ IsolateYear, data = df, type = "l")
+    
+    sp <- ggplot(data=df, aes(x=IsolateYear, y = Percentage, group = 1)) + geom_point(aes(size = Numseqs), color = "purple") + scale_size(range = c(2,12)) 
+    
+    sp + geom_hline(yintercept=5, linetype="dashed", color = "blue") + geom_hline(yintercept=15, linetype="dashed", color = "red") + theme(axis.text.x = element_text(angle = 45, hjust = 1)) + ggtitle("Overall trend in drug resistance") + theme(plot.title = element_text(hjust = 0.5)) + theme(plot.title = element_text(size=14, face="bold")) 
+
+#####################################################################################
+####Calculate overall resistance
+
+    e <- mytable
+    f <- sum(e[,2])
+    g <- sum(e[,1]) + sum(e[,2])
+    totres <- f/g * 100
+    print(totres)
+    
+#####################################################################################
+z <- glmer(trendexcl[,54] ~ trendexcl[,58] + (1|trendexcl[,1]), data=trendexcl, family=binomial)
+z1 <- predict(z, re.form=NA)
+invlogit <- function(x){exp(x)/(exp(x) + 1)}
+ypred <- (invlogit(z1))*100
+newx <- trendexcl$IsolateYear2[order(trendexcl$IsolateYear2)]
+newy <- ypred[order(trendexcl$IsolateYear2)]
+lines(newx,newy,lty=1)
