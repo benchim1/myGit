@@ -201,6 +201,15 @@ PI
     df$IsolateYear.1 <- NULL
     df$IsolateYear.2 <- NULL
     df$IsolateYear.3 <- NULL
+    
+    pTest = function(x) {
+  t=prop.test(sum(x, na.rm=TRUE), length(!is.na(x)))
+  est = round(c(t$estimate, t$conf.int)*100, 3)
+  est
+}
+yy=matrix(unlist(tapply(trendexcl$NumNRTISDRMs, trendexcl$IsolateYear, pTest)), ncol=3,byrow=TRUE)
+colnames(yy) = c("est2", "lb2", "ub2")
+df = cbind(df, yy)
 ```
 
 ```{r echo=FALSE}
